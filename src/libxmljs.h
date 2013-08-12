@@ -4,12 +4,11 @@
 
 #include <v8.h>
 #include <node.h>
+#include "nan.h"
 
 #define LIBXMLJS_ARGUMENT_TYPE_CHECK(arg, type, err)                          \
   if (!arg->type()) {                                                         \
-    v8::Local<v8::Value> exception = v8::Exception::TypeError(                \
-      v8::String::New(err));                                                  \
-    return v8::ThrowException(exception);                                     \
+    return NanThrowTypeError(err);                                            \
   }
 
 namespace libxmljs {

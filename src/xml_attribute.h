@@ -24,10 +24,10 @@ public:
 
 protected:
 
-    static v8::Handle<v8::Value> New(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Name(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Value(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Node(const v8::Arguments& args);
+    static NAN_METHOD(New);
+    static NAN_METHOD(Name);
+    static NAN_METHOD(Value);
+    static NAN_METHOD(Node);
 
     v8::Handle<v8::Value> get_name();
     v8::Handle<v8::Value> get_value();

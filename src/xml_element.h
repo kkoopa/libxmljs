@@ -21,21 +21,21 @@ public:
 
 protected:
 
-    static v8::Handle<v8::Value> New(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Name(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Attr(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Attrs(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Find(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Text(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Path(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Child(const v8::Arguments& args);
-    static v8::Handle<v8::Value> ChildNodes(const v8::Arguments& args);
-    static v8::Handle<v8::Value> AddChild(const v8::Arguments& args);
-    static v8::Handle<v8::Value> AddCData(const v8::Arguments& args);
-    static v8::Handle<v8::Value> NextElement(const v8::Arguments& args);
-    static v8::Handle<v8::Value> PrevElement(const v8::Arguments& args);
-    static v8::Handle<v8::Value> AddPrevSibling(const v8::Arguments& args);
-    static v8::Handle<v8::Value> AddNextSibling(const v8::Arguments& args);
+    static NAN_METHOD(New);
+    static NAN_METHOD(Name);
+    static NAN_METHOD(Attr);
+    static NAN_METHOD(Attrs);
+    static NAN_METHOD(Find);
+    static NAN_METHOD(Text);
+    static NAN_METHOD(Path);
+    static NAN_METHOD(Child);
+    static NAN_METHOD(ChildNodes);
+    static NAN_METHOD(AddChild);
+    static NAN_METHOD(AddCData);
+    static NAN_METHOD(NextElement);
+    static NAN_METHOD(PrevElement);
+    static NAN_METHOD(AddPrevSibling);
+    static NAN_METHOD(AddNextSibling);
 
     void set_name(const char* name);
 

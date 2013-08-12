@@ -49,8 +49,7 @@ XmlSyntaxError::BuildSyntaxError(xmlError* error) {
 
 void
 XmlSyntaxError::PushToArray(void* errs, xmlError* error) {
-    v8::Local<v8::Array> errors = reinterpret_cast<v8::Array*>(errs);
-
+    v8::Local<v8::Array> errors = *reinterpret_cast<v8::Local<v8::Array>*>(errs);
     // push method for array
     v8::Handle<v8::Function> push = v8::Handle<v8::Function>::Cast(errors->Get(v8::String::NewSymbol("push")));
 

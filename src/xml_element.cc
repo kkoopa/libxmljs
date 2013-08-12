@@ -16,15 +16,14 @@ namespace libxmljs {
 v8::Persistent<v8::FunctionTemplate> XmlElement::constructor_template;
 
 // doc, name, content
-v8::Handle<v8::Value>
-XmlElement::New(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlElement::New) {
+  NanScope();
 
   // if we were created for an existing xml node, then we don't need
   // to create a new node on the document
   if (args.Length() == 0)
   {
-      return scope.Close(args.Holder());
+      NanReturnValue(args.Holder());
   }
 
   XmlDocument* document = ObjectWrap::Unwrap<XmlDocument>(args[0]->ToObject());
@@ -54,26 +53,24 @@ XmlElement::New(const v8::Arguments& args) {
   // this prevents the document from going away
   args.Holder()->Set(v8::String::NewSymbol("document"), args[0]);
 
-  return scope.Close(args.Holder());
+  NanReturnValue(args.Holder());
 }
 
-v8::Handle<v8::Value>
-XmlElement::Name(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlElement::Name) {
+  NanScope();
   XmlElement *element = ObjectWrap::Unwrap<XmlElement>(args.Holder());
   assert(element);
 
   if (args.Length() == 0)
-      return scope.Close(element->get_name());
+      NanReturnValue(element->get_name());
 
   v8::String::Utf8Value name(args[0]->ToString());
   element->set_name(*name);
-  return scope.Close(args.Holder());
+  NanReturnValue(args.Holder());
 }
 
-v8::Handle<v8::Value>
-XmlElement::Attr(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlElement::Attr) {
+  NanScope();
   XmlElement* element = ObjectWrap::Unwrap<XmlElement>(args.Holder());
   assert(element);
 
@@ -81,7 +78,7 @@ XmlElement::Attr(const v8::Arguments& args) {
   if (args.Length() == 1)
   {
       v8::String::Utf8Value name(args[0]);
-      return scope.Close(element->get_attr(*name));
+      NanReturnValue(element->get_attr(*name));
   }
 
   // setter
@@ -89,21 +86,19 @@ XmlElement::Attr(const v8::Arguments& args) {
   v8::String::Utf8Value value(args[1]->ToString());
   element->set_attr(*name, *value);
 
-  return scope.Close(args.Holder());
+  NanReturnValue(args.Holder());
 }
 
-v8::Handle<v8::Value>
-XmlElement::Attrs(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlElement::Attrs) {
+  NanScope();
   XmlElement *element = ObjectWrap::Unwrap<XmlElement>(args.Holder());
   assert(element);
 
-  return scope.Close(element->get_attrs());
+  NanReturnValue(element->get_attrs());
 }
 
-v8::Handle<v8::Value>
-XmlElement::AddChild(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlElement::AddChild) {
+  NanScope();
   XmlElement* element = ObjectWrap::Unwrap<XmlElement>(args.Holder());
   assert(element);
 
@@ -113,16 +108,15 @@ XmlElement::AddChild(const v8::Arguments& args) {
   child = element->import_element(child);
 
   if(child == NULL) {
-      return ThrowError("Could not add child. Failed to copy node to new Document.");
+      return NanThrowError("Could not add child. Failed to copy node to new Document.");
   }
 
   element->add_child(child);
-  return scope.Close(args.Holder());
+  NanReturnValue(args.Holder());
 }
 
-v8::Handle<v8::Value>
-XmlElement::AddCData(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlElement::AddCData) {
+  NanScope();
   XmlElement* element = ObjectWrap::Unwrap<XmlElement>(args.Holder());
   assert(element);
 
@@ -138,12 +132,11 @@ XmlElement::AddCData(const v8::Arguments& args) {
                                   xmlStrlen((const xmlChar*)content));
 
   element->add_cdata(elem);
-  return scope.Close(args.Holder());
+  NanReturnValue(args.Holder());
 }
 
-v8::Handle<v8::Value>
-XmlElement::Find(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlElement::Find) {
+  NanScope();
   XmlElement* element = ObjectWrap::Unwrap<XmlElement>(args.Holder());
   assert(element);
 
@@ -169,45 +162,41 @@ XmlElement::Find(const v8::Arguments& args) {
     }
   }
 
-  return scope.Close(ctxt.evaluate((const xmlChar*)*xpath));
+  NanReturnValue(ctxt.evaluate((const xmlChar*)*xpath));
 }
 
-v8::Handle<v8::Value>
-XmlElement::NextElement(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlElement::NextElement) {
+  NanScope();
   XmlElement *element = ObjectWrap::Unwrap<XmlElement>(args.Holder());
   assert(element);
 
-  return scope.Close(element->get_next_element());
+  NanReturnValue(element->get_next_element());
 }
 
-v8::Handle<v8::Value>
-XmlElement::PrevElement(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlElement::PrevElement) {
+  NanScope();
   XmlElement *element = ObjectWrap::Unwrap<XmlElement>(args.Holder());
   assert(element);
 
-  return scope.Close(element->get_prev_element());
+  NanReturnValue(element->get_prev_element());
 }
 
-v8::Handle<v8::Value>
-XmlElement::Text(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlElement::Text) {
+  NanScope();
   XmlElement *element = ObjectWrap::Unwrap<XmlElement>(args.Holder());
   assert(element);
 
   if (args.Length() == 0) {
-    return scope.Close(element->get_content());
+    NanReturnValue(element->get_content());
   } else {
     element->set_content(*v8::String::Utf8Value(args[0]));
   }
 
-  return scope.Close(args.Holder());
+  NanReturnValue(args.Holder());
 }
 
-v8::Handle<v8::Value>
-XmlElement::Child(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlElement::Child) {
+  NanScope();
   XmlElement* element = ObjectWrap::Unwrap<XmlElement>(args.Holder());
   assert(element);
 
@@ -217,33 +206,30 @@ XmlElement::Child(const v8::Arguments& args) {
   }
 
   const int32_t idx = args[0]->Int32Value();
-  return scope.Close(element->get_child(idx));
+  NanReturnValue(element->get_child(idx));
 }
 
-v8::Handle<v8::Value>
-XmlElement::ChildNodes(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlElement::ChildNodes) {
+  NanScope();
   XmlElement* element = ObjectWrap::Unwrap<XmlElement>(args.Holder());
   assert(element);
 
   if (args[0]->IsInt32())
-      return scope.Close(element->get_child(args[0]->Int32Value()));
+      NanReturnValue(element->get_child(args[0]->Int32Value()));
 
-  return scope.Close(element->get_child_nodes());
+  NanReturnValue(element->get_child_nodes());
 }
 
-v8::Handle<v8::Value>
-XmlElement::Path(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlElement::Path) {
+  NanScope();
   XmlElement *element = ObjectWrap::Unwrap<XmlElement>(args.Holder());
   assert(element);
 
-  return scope.Close(element->get_path());
+  NanReturnValue(element->get_path());
 }
 
-v8::Handle<v8::Value>
-XmlElement::AddPrevSibling(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlElement::AddPrevSibling) {
+  NanScope();
   XmlElement* element = ObjectWrap::Unwrap<XmlElement>(args.Holder());
   assert(element);
 
@@ -254,12 +240,11 @@ XmlElement::AddPrevSibling(const v8::Arguments& args) {
 
   element->add_prev_sibling(new_sibling);
 
-  return scope.Close(args[0]);
+  NanReturnValue(args[0]);
 }
 
-v8::Handle<v8::Value>
-XmlElement::AddNextSibling(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlElement::AddNextSibling) {
+  NanScope();
   XmlElement* element = ObjectWrap::Unwrap<XmlElement>(args.Holder());
   assert(element);
 
@@ -270,7 +255,7 @@ XmlElement::AddNextSibling(const v8::Arguments& args) {
 
   element->add_next_sibling(new_sibling);
 
-  return scope.Close(args[0]);
+  NanReturnValue(args[0]);
 }
 
 void
@@ -287,7 +272,7 @@ XmlElement::get_name() {
 // TODO(sprsquish) make these work with namespaces
 v8::Handle<v8::Value>
 XmlElement::get_attr(const char* name) {
-  v8::HandleScope scope;
+  NanScope();
   xmlAttr* attr = xmlHasProp(xml_obj, (const xmlChar*)name);
 
   // why do we need a reference to the element here?
@@ -308,7 +293,7 @@ XmlElement::set_attr(const char* name,
 
 v8::Handle<v8::Value>
 XmlElement::get_attrs() {
-  v8::HandleScope scope;
+  NanScope();
   xmlAttr* attr = xml_obj->properties;
 
   if (!attr)
@@ -345,7 +330,7 @@ XmlElement::add_cdata(xmlNode* cdata) {
 
 v8::Handle<v8::Value>
 XmlElement::get_child(int32_t idx) {
-  v8::HandleScope scope;
+  NanScope();
   xmlNode* child = xml_obj->children;
 
   int32_t i = 0;
@@ -362,7 +347,7 @@ XmlElement::get_child(int32_t idx) {
 
 v8::Handle<v8::Value>
 XmlElement::get_child_nodes() {
-    v8::HandleScope scope;
+    NanScope();
 
     xmlNode* child = xml_obj->children;
     if (!child)
@@ -416,7 +401,7 @@ XmlElement::get_content() {
 
 v8::Handle<v8::Value>
 XmlElement::get_next_element() {
-  v8::HandleScope scope;
+  NanScope();
 
   xmlNode* sibling = xml_obj->next;
   if (!sibling)
@@ -434,7 +419,7 @@ XmlElement::get_next_element() {
 
 v8::Handle<v8::Value>
 XmlElement::get_prev_element() {
-  v8::HandleScope scope;
+  NanScope();
 
   xmlNode* sibling = xml_obj->prev;
   if (!sibling)
@@ -455,11 +440,11 @@ v8::Handle<v8::Object>
 XmlElement::New(xmlNode* node)
 {
     if (node->_private) {
-        return static_cast<XmlNode*>(node->_private)->handle_;
+        return NanObjectWrapHandle(static_cast<XmlNode*>(node->_private));
     }
 
     XmlElement* element = new XmlElement(node);
-    v8::Local<v8::Object> obj = constructor_template->GetFunction()->NewInstance();
+    v8::Local<v8::Object> obj = NanPersistentToLocal(constructor_template)->GetFunction()->NewInstance();
     element->Wrap(obj);
     return obj;
 }
@@ -504,70 +489,70 @@ XmlElement::import_element(XmlElement *element) {
 void
 XmlElement::Initialize(v8::Handle<v8::Object> target)
 {
-    v8::HandleScope scope;
-    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(New);
-    constructor_template = v8::Persistent<v8::FunctionTemplate>::New(t);
-    constructor_template->Inherit(XmlNode::constructor_template);
-    constructor_template->InstanceTemplate()->SetInternalFieldCount(1);
+    NanScope();
+    v8::Local<v8::FunctionTemplate> tmpl = v8::FunctionTemplate::New(New);
+    NanAssignPersistent(v8::FunctionTemplate, constructor_template, tmpl);
+    tmpl->Inherit(NanPersistentToLocal(XmlNode::constructor_template));
+    tmpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor_template,
+    NODE_SET_PROTOTYPE_METHOD(tmpl,
             "addChild",
             XmlElement::AddChild);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor_template,
+    NODE_SET_PROTOTYPE_METHOD(tmpl,
             "addCData",
             XmlElement::AddCData);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor_template,
+    NODE_SET_PROTOTYPE_METHOD(tmpl,
             "_attr",
             XmlElement::Attr);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor_template,
+    NODE_SET_PROTOTYPE_METHOD(tmpl,
             "attrs",
             XmlElement::Attrs);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor_template,
+    NODE_SET_PROTOTYPE_METHOD(tmpl,
             "child",
             XmlElement::Child);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor_template,
+    NODE_SET_PROTOTYPE_METHOD(tmpl,
             "childNodes",
             XmlElement::ChildNodes);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor_template,
+    NODE_SET_PROTOTYPE_METHOD(tmpl,
             "find",
             XmlElement::Find);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor_template,
+    NODE_SET_PROTOTYPE_METHOD(tmpl,
             "nextElement",
             XmlElement::NextElement);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor_template,
+    NODE_SET_PROTOTYPE_METHOD(tmpl,
             "prevElement",
             XmlElement::PrevElement);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor_template,
+    NODE_SET_PROTOTYPE_METHOD(tmpl,
             "name",
             XmlElement::Name);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor_template,
+    NODE_SET_PROTOTYPE_METHOD(tmpl,
             "path",
             XmlElement::Path);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor_template,
+    NODE_SET_PROTOTYPE_METHOD(tmpl,
             "text",
             XmlElement::Text);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor_template,
+    NODE_SET_PROTOTYPE_METHOD(tmpl,
             "addPrevSibling",
             XmlElement::AddPrevSibling);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor_template,
+    NODE_SET_PROTOTYPE_METHOD(tmpl,
             "addNextSibling",
             XmlElement::AddNextSibling);
 
     target->Set(v8::String::NewSymbol("Element"),
-            constructor_template->GetFunction());
+            tmpl->GetFunction());
 }
 
 }  // namespace libxmljs

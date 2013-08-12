@@ -25,7 +25,7 @@ XmlXpathContext::register_ns(const xmlChar* prefix,
 
 v8::Handle<v8::Value>
 XmlXpathContext::evaluate(const xmlChar* xpath) {
-  v8::HandleScope scope;
+  NanScope();
   xmlXPathObject* xpathobj = xmlXPathEval(xpath, ctxt);
   v8::Handle<v8::Value> res;
 

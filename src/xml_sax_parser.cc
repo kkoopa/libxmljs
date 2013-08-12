@@ -16,7 +16,7 @@ libxmljs::XmlSaxParser* LXJS_GET_PARSER_FROM_CONTEXT(void *context)
 
 namespace {
     using namespace v8; // node 0.4.7 fails to use v8:: in NODE_PSYMBOL
-    v8::Persistent<v8::String> emit_symbol = NODE_PSYMBOL("emit");
+    NanInitPersistent(v8::String, emit_symbol, v8::String::NewSymbol("emit"));
 }
 
 namespace libxmljs {
@@ -88,33 +88,29 @@ XmlSaxParser::releaseContext() {
   }
 }
 
-v8::Handle<v8::Value>
-XmlSaxParser::NewParser(const v8::Arguments& args) {
-  v8::HandleScope scope;
 
+NAN_METHOD(XmlSaxParser::NewParser) {
+  NanScope();
   XmlSaxParser* parser = new XmlSaxParser();
   parser->Wrap(args.Holder());
 
-  return scope.Close(args.Holder());
+  NanReturnValue(args.Holder());
 }
 
-v8::Handle<v8::Value>
-XmlSaxParser::NewPushParser(const v8::Arguments& args) {
-  v8::HandleScope scope;
-
-  v8::Handle<v8::Value> return_val = NewParser(args);
-
-  XmlSaxParser *parser = ObjectWrap::Unwrap<XmlSaxParser>(args.Holder());
+NAN_METHOD(XmlSaxParser::NewPushParser) {
+  NanScope();
+  XmlSaxParser* parser = new XmlSaxParser();
   parser->initialize_push_parser();
+  parser->Wrap(args.Holder());
 
-  return scope.Close(return_val);
+  NanReturnValue(args.Holder());
 }
 
 void
 XmlSaxParser::Callback(const char* what,
                        int argc,
                        v8::Handle<v8::Value> argv[]) {
-    v8::HandleScope scope;
+    NanScope();
 
     // new arguments array with first argument being the event name
     v8::Handle<v8::Value>* args = new v8::Handle<v8::Value>[argc+1];
@@ -125,14 +121,14 @@ XmlSaxParser::Callback(const char* what,
     }
 
     // get the 'emit' function from ourselves
-    v8::Local<v8::Value> emit_v = this->handle_->Get(emit_symbol);
+    v8::Local<v8::Value> emit_v = NanObjectWrapHandle(this)->Get(NanPersistentToLocal(emit_symbol));
     assert(emit_v->IsFunction());
     v8::Local<v8::Function> emit = v8::Local<v8::Function>::Cast(emit_v);
 
     v8::TryCatch try_catch;
 
     // trigger the event
-    emit->Call(this->handle_, argc + 1, args);
+    emit->Call(NanObjectWrapHandle(this), argc + 1, args);
 
     if (try_catch.HasCaught())
     {
@@ -142,9 +138,8 @@ XmlSaxParser::Callback(const char* what,
     delete[] args;
 }
 
-v8::Handle<v8::Value>
-XmlSaxParser::Push(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlSaxParser::Push) {
+  NanScope();
   LIBXMLJS_ARGUMENT_TYPE_CHECK(args[0],
                                IsString,
                                "Bad Argument: parseString requires a string");
@@ -157,7 +152,7 @@ XmlSaxParser::Push(const v8::Arguments& args) {
 
   parser->push(*parsable, parsable.length(), terminate);
 
-  return scope.Close(v8::Boolean::New(true));
+  NanReturnValue(v8::Boolean::New(true));
 }
 
 void
@@ -174,9 +169,8 @@ XmlSaxParser::push(const char* str,
   xmlParseChunk(context_, str, size, terminate);
 }
 
-v8::Handle<v8::Value>
-XmlSaxParser::ParseString(const v8::Arguments& args) {
-  v8::HandleScope scope;
+NAN_METHOD(XmlSaxParser::ParseString) {
+  NanScope();
   LIBXMLJS_ARGUMENT_TYPE_CHECK(args[0],
                                IsString,
                                "Bad Argument: parseString requires a string");
@@ -187,7 +181,7 @@ XmlSaxParser::ParseString(const v8::Arguments& args) {
   parser->parse_string(*parsable, parsable.length());
 
   // TODO(sprsquish): return based on the parser
-  return scope.Close(v8::Boolean::New(true));
+  NanReturnValue(v8::Boolean::New(true));
 }
 
 void
@@ -227,7 +221,7 @@ XmlSaxParser::start_element_ns(void* context,
                                int nb_attributes,
                                int nb_defaulted,
                                const xmlChar** attributes) {
-  v8::HandleScope scope;
+  NanScope();
   libxmljs::XmlSaxParser* parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
 
   const int argc = 5;
@@ -270,8 +264,17 @@ XmlSaxParser::start_element_ns(void* context,
   }
   argv[1] = attrList;
 
-  argv[2] = prefix ? v8::String::New((const char*)prefix) : v8::Null();
-  argv[3] = uri ? v8::String::New((const char*)uri) : v8::Null();
+  if (prefix) {
+    argv[2] = v8::String::New((const char*)prefix);
+  } else {
+    argv[2] = v8::Null();
+  }
+
+  if (uri) {
+    argv[3] = v8::String::New((const char*)uri);
+  } else {
+    argv[3] = v8::Null();
+  }
 
   // Build namespace array of arrays [[prefix, ns], [prefix, ns]]
   v8::Local<v8::Array> nsList = v8::Array::New(nb_namespaces);
@@ -281,9 +284,11 @@ XmlSaxParser::start_element_ns(void* context,
       nsUri  = namespaces[i++];
 
       elem = v8::Array::New(2);
-      elem->Set(v8::Integer::New(0),
-                xmlStrlen(nsPref) == 0 ? v8::Null() :
-                v8::String::New((const char *)nsPref, xmlStrlen(nsPref)));
+      if (xmlStrlen(nsPref) == 0) {
+        elem->Set(v8::Integer::New(0), v8::Null());
+      } else {
+        elem->Set(v8::Integer::New(0), v8::String::New((const char *)nsPref, xmlStrlen(nsPref)));
+      }
 
       elem->Set(v8::Integer::New(1),
                 v8::String::New((const char *)nsUri,
@@ -303,14 +308,23 @@ XmlSaxParser::end_element_ns(void* context,
         const xmlChar* prefix,
         const xmlChar* uri)
 {
-    v8::HandleScope scope;
+    NanScope();
     libxmljs::XmlSaxParser* parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
 
-    v8::Handle<v8::Value> argv[3] = {
-        v8::String::New((const char*)localname),
-        prefix ? v8::String::New((const char*)prefix) : v8::Null(),
-        uri ? v8::String::New((const char*)uri) : v8::Null()
-    };
+    v8::Handle<v8::Value> argv[3];
+    argv[0] = v8::String::New((const char*)localname);
+
+    if (prefix) {
+        argv[1] = v8::String::New((const char*)prefix);
+    } else {
+        argv[1] = v8::Null();
+    }
+
+    if (uri) {
+        argv[2] = v8::String::New((const char*)uri);
+    } else {
+        argv[2] = v8::Null();
+    }
 
     parser->Callback("endElementNS", 3, argv);
 }
@@ -320,7 +334,7 @@ XmlSaxParser::characters(void* context,
                          const xmlChar* ch,
                          int len)
 {
-    v8::HandleScope scope;
+    NanScope();
     libxmljs::XmlSaxParser* parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
 
     v8::Handle<v8::Value> argv[1] = { v8::String::New((const char*)ch, len) };
@@ -330,7 +344,7 @@ XmlSaxParser::characters(void* context,
 void
 XmlSaxParser::comment(void* context, const xmlChar* value)
 {
-    v8::HandleScope scope;
+    NanScope();
     libxmljs::XmlSaxParser* parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
     v8::Handle<v8::Value> argv[1] = { v8::String::New((const char*)value) };
     parser->Callback("comment", 1, argv);
@@ -340,7 +354,7 @@ void
 XmlSaxParser::cdata_block(void* context, const xmlChar* value,
                           int len)
 {
-    v8::HandleScope scope;
+    NanScope();
     libxmljs::XmlSaxParser* parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
     v8::Handle<v8::Value> argv[1] = { v8::String::New((const char*)value, len) };
     parser->Callback("cdata", 1, argv);
@@ -379,7 +393,7 @@ static int vasprintf(char **buf, const char *fmt, va_list ap)
 void
 XmlSaxParser::warning(void* context, const char* msg, ...)
 {
-    v8::HandleScope scope;
+    NanScope();
     libxmljs::XmlSaxParser* parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
 
     char* message;
@@ -399,7 +413,7 @@ XmlSaxParser::warning(void* context, const char* msg, ...)
 void
 XmlSaxParser::error(void* context, const char* msg, ...)
 {
-    v8::HandleScope scope;
+    NanScope();
     libxmljs::XmlSaxParser* parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
 
     char* message;
@@ -418,38 +432,36 @@ XmlSaxParser::error(void* context, const char* msg, ...)
 
 void
 XmlSaxParser::Initialize(v8::Handle<v8::Object> target) {
-  v8::HandleScope scope;
+  NanScope();
 
   // SAX Parser
   v8::Local<v8::FunctionTemplate> parser_t =
     v8::FunctionTemplate::New(NewParser);
 
-  v8::Persistent<v8::FunctionTemplate> sax_parser_template =
-    v8::Persistent<v8::FunctionTemplate>::New(parser_t);
+  NanInitPersistent(v8::FunctionTemplate, sax_parser_template, parser_t);
 
-  sax_parser_template->InstanceTemplate()->SetInternalFieldCount(1);
+  parser_t->InstanceTemplate()->SetInternalFieldCount(1);
 
-  NODE_SET_PROTOTYPE_METHOD(sax_parser_template,
+  NODE_SET_PROTOTYPE_METHOD(parser_t,
                         "parseString",
                         XmlSaxParser::ParseString);
 
   target->Set(v8::String::NewSymbol("SaxParser"),
-              sax_parser_template->GetFunction());
+              parser_t->GetFunction());
 
   v8::Local<v8::FunctionTemplate> push_parser_t =
     v8::FunctionTemplate::New(NewPushParser);
 
   // Push Parser
-  v8::Persistent<v8::FunctionTemplate> sax_push_parser_template =
-    v8::Persistent<v8::FunctionTemplate>::New(push_parser_t);
+  NanInitPersistent(v8::FunctionTemplate, sax_push_parser_template, push_parser_t);
 
-  sax_push_parser_template->InstanceTemplate()->SetInternalFieldCount(1);
+  push_parser_t->InstanceTemplate()->SetInternalFieldCount(1);
 
-  NODE_SET_PROTOTYPE_METHOD(sax_push_parser_template,
+  NODE_SET_PROTOTYPE_METHOD(push_parser_t,
                         "push",
                         XmlSaxParser::Push);
 
   target->Set(v8::String::NewSymbol("SaxPushParser"),
-              sax_push_parser_template->GetFunction());
+              push_parser_t->GetFunction());
 }
 }  // namespace libxmljs

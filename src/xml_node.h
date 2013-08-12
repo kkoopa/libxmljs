@@ -3,6 +3,7 @@
 #define SRC_XML_NODE_H_
 
 #include <libxml/tree.h>
+#include "nan.h"
 
 namespace libxmljs {
 
@@ -22,17 +23,17 @@ public:
 
 protected:
 
-    static v8::Handle<v8::Value> Doc(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Namespace(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Namespaces(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Parent(const v8::Arguments& args);
-    static v8::Handle<v8::Value> NextSibling(const v8::Arguments& args);
-    static v8::Handle<v8::Value> PrevSibling(const v8::Arguments& args);
-    static v8::Handle<v8::Value> LineNumber(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Type(const v8::Arguments& args);
-    static v8::Handle<v8::Value> ToString(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Remove(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Clone(const v8::Arguments& args);
+    static NAN_METHOD(Doc);
+    static NAN_METHOD(Namespace);
+    static NAN_METHOD(Namespaces);
+    static NAN_METHOD(Parent);
+    static NAN_METHOD(NextSibling);
+    static NAN_METHOD(PrevSibling);
+    static NAN_METHOD(LineNumber);
+    static NAN_METHOD(Type);
+    static NAN_METHOD(ToString);
+    static NAN_METHOD(Remove);
+    static NAN_METHOD(Clone);
 
     v8::Handle<v8::Value> get_doc();
     v8::Handle<v8::Value> remove_namespace();
