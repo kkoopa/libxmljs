@@ -14,9 +14,11 @@ libxmljs::XmlSaxParser* LXJS_GET_PARSER_FROM_CONTEXT(void *context)
     return static_cast<libxmljs::XmlSaxParser*>(the_context->_private);
 }
 
+#define EMIT_SYMBOL_STRING "emit"
+
 namespace {
     using namespace v8; // node 0.4.7 fails to use v8:: in NODE_PSYMBOL
-    NanInitPersistent(v8::String, emit_symbol, v8::String::NewSymbol("emit"));
+    NanInitPersistent(v8::String, emit_symbol, v8::String::NewSymbol(EMIT_SYMBOL_STRING));
 }
 
 namespace libxmljs {
@@ -123,12 +125,17 @@ XmlSaxParser::Callback(const char* what,
     // get the 'emit' function from ourselves
     v8::Local<v8::Value> emit_v = NanObjectWrapHandle(this)->Get(NanPersistentToLocal(emit_symbol));
     assert(emit_v->IsFunction());
+
+    // trigger the event
+#if NODE_VERSION_AT_LEAST(0, 8, 0)
     v8::Local<v8::Function> emit = v8::Local<v8::Function>::Cast(emit_v);
 
     v8::TryCatch try_catch;
-
-    // trigger the event
-    emit->Call(NanObjectWrapHandle(this), argc + 1, args);
+    node::MakeCallback(NanObjectWrapHandle(this), emit, argc + 1, args);
+#else
+    v8::TryCatch try_catch;
+    node::MakeCallback(NanObjectWrapHandle(this), EMIT_SYMBOL_STRING, argc + 1, args);
+#endif
 
     if (try_catch.HasCaught())
     {
