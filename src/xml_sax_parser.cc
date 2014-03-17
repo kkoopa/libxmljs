@@ -18,7 +18,7 @@ libxmljs::XmlSaxParser* LXJS_GET_PARSER_FROM_CONTEXT(void *context)
 
 namespace {
     using namespace v8; // node 0.4.7 fails to use v8:: in NODE_PSYMBOL
-    NanInitPersistent(v8::String, emit_symbol, v8::String::NewSymbol(EMIT_SYMBOL_STRING));
+    v8::Persistent<v8::String> emit_symbol;
 }
 
 namespace libxmljs {
@@ -111,12 +111,12 @@ NAN_METHOD(XmlSaxParser::NewPushParser) {
 void
 XmlSaxParser::Callback(const char* what,
                        int argc,
-                       v8::Handle<v8::Value> argv[]) {
+                       v8::Local<v8::Value> argv[]) {
     NanScope();
 
     // new arguments array with first argument being the event name
-    v8::Handle<v8::Value>* args = new v8::Handle<v8::Value>[argc+1];
-    args[0] = v8::String::New(what);
+    v8::Local<v8::Value>* args = new v8::Local<v8::Value>[argc+1];
+    args[0] = NanNew<v8::String>(what);
     for (int i = 1; i <= argc; ++i)
     {
         args[i] = argv[i-1];
@@ -127,20 +127,7 @@ XmlSaxParser::Callback(const char* what,
     assert(emit_v->IsFunction());
 
     // trigger the event
-#if NODE_VERSION_AT_LEAST(0, 8, 0)
-    v8::Local<v8::Function> emit = v8::Local<v8::Function>::Cast(emit_v);
-
-    v8::TryCatch try_catch;
-    node::MakeCallback(NanObjectWrapHandle(this), emit, argc + 1, args);
-#else
-    v8::TryCatch try_catch;
-    node::MakeCallback(NanObjectWrapHandle(this), EMIT_SYMBOL_STRING, argc + 1, args);
-#endif
-
-    if (try_catch.HasCaught())
-    {
-        node::FatalException(try_catch);
-    }
+    NanMakeCallback(NanObjectWrapHandle(this), v8::Local<v8::Function>::Cast(emit_v), argc + 1, args);
 
     delete[] args;
 }
@@ -159,7 +146,7 @@ NAN_METHOD(XmlSaxParser::Push) {
 
   parser->push(*parsable, parsable.length(), terminate);
 
-  NanReturnValue(v8::Boolean::New(true));
+  NanReturnValue(NanTrue());
 }
 
 void
@@ -188,7 +175,7 @@ NAN_METHOD(XmlSaxParser::ParseString) {
   parser->parse_string(*parsable, parsable.length());
 
   // TODO(sprsquish): return based on the parser
-  NanReturnValue(v8::Boolean::New(true));
+  NanReturnValue(NanTrue());
 }
 
 void
@@ -238,13 +225,13 @@ XmlSaxParser::start_element_ns(void* context,
   v8::Local<v8::Array> elem;
 
   // Initialize argv with localname, prefix, and uri
-  v8::Handle<v8::Value> argv[argc] = {
-    v8::String::New((const char*)localname)
+  v8::Local<v8::Value> argv[argc] = {
+    NanNew<v8::String>((const char*)localname)
   };
 
   // Build attributes list
   // Each attribute is an array of [localname, prefix, URI, value, end]
-  v8::Local<v8::Array> attrList = v8::Array::New(nb_attributes);
+  v8::Local<v8::Array> attrList = NanNew<v8::Array>(nb_attributes);
   if (attributes) {
     for (i = 0, j = 0; j < nb_attributes; i += 5, j++) {
       attrLocal = attributes[i+0];
@@ -252,56 +239,56 @@ XmlSaxParser::start_element_ns(void* context,
       attrUri   = attributes[i+2];
       attrVal   = attributes[i+3];
 
-      elem = v8::Array::New(4);
+      elem = NanNew<v8::Array>(4);
 
-      elem->Set(v8::Integer::New(0),
-                v8::String::New((const char*)attrLocal, xmlStrlen(attrLocal)));
+      elem->Set(NanNew<v8::Integer>(0),
+                NanNew<v8::String>((const char*)attrLocal, xmlStrlen(attrLocal)));
 
-      elem->Set(v8::Integer::New(1),
-                v8::String::New((const char*)attrPref, xmlStrlen(attrPref)));
+      elem->Set(NanNew<v8::Integer>(1),
+                NanNew<v8::String>((const char*)attrPref, xmlStrlen(attrPref)));
 
-      elem->Set(v8::Integer::New(2),
-                v8::String::New((const char*)attrUri, xmlStrlen(attrUri)));
+      elem->Set(NanNew<v8::Integer>(2),
+                NanNew<v8::String>((const char*)attrUri, xmlStrlen(attrUri)));
 
-      elem->Set(v8::Integer::New(3),
-                v8::String::New((const char*)attrVal, attributes[i+4]-attrVal));
+      elem->Set(NanNew<v8::Integer>(3),
+                NanNew<v8::String>((const char*)attrVal, attributes[i+4]-attrVal));
 
-      attrList->Set(v8::Integer::New(j), elem);
+      attrList->Set(NanNew<v8::Integer>(j), elem);
     }
   }
   argv[1] = attrList;
 
   if (prefix) {
-    argv[2] = v8::String::New((const char*)prefix);
+    argv[2] = NanNew<v8::String>((const char*)prefix);
   } else {
-    argv[2] = v8::Null();
+    argv[2] = NanNew(NanNull());
   }
 
   if (uri) {
-    argv[3] = v8::String::New((const char*)uri);
+    argv[3] = NanNew<v8::String>((const char*)uri);
   } else {
-    argv[3] = v8::Null();
+    argv[3] = NanNew(NanNull());
   }
 
   // Build namespace array of arrays [[prefix, ns], [prefix, ns]]
-  v8::Local<v8::Array> nsList = v8::Array::New(nb_namespaces);
+  v8::Local<v8::Array> nsList = NanNew<v8::Array>(nb_namespaces);
   if (namespaces) {
     for (i = 0, j = 0; j < nb_namespaces; j++) {
       nsPref = namespaces[i++];
       nsUri  = namespaces[i++];
 
-      elem = v8::Array::New(2);
+      elem = NanNew<v8::Array>(2);
       if (xmlStrlen(nsPref) == 0) {
-        elem->Set(v8::Integer::New(0), v8::Null());
+        elem->Set(NanNew<v8::Integer>(0), NanNull());
       } else {
-        elem->Set(v8::Integer::New(0), v8::String::New((const char *)nsPref, xmlStrlen(nsPref)));
+        elem->Set(NanNew<v8::Integer>(0), NanNew<v8::String>((const char *)nsPref, xmlStrlen(nsPref)));
       }
 
-      elem->Set(v8::Integer::New(1),
-                v8::String::New((const char *)nsUri,
+      elem->Set(NanNew<v8::Integer>(1),
+                NanNew<v8::String>((const char *)nsUri,
                 xmlStrlen(nsUri)));
 
-      nsList->Set(v8::Integer::New(j), elem);
+      nsList->Set(NanNew<v8::Integer>(j), elem);
     }
   }
   argv[4] = nsList;
@@ -318,19 +305,19 @@ XmlSaxParser::end_element_ns(void* context,
     NanScope();
     libxmljs::XmlSaxParser* parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
 
-    v8::Handle<v8::Value> argv[3];
-    argv[0] = v8::String::New((const char*)localname);
+    v8::Local<v8::Value> argv[3];
+    argv[0] = NanNew<v8::String>((const char*)localname);
 
     if (prefix) {
-        argv[1] = v8::String::New((const char*)prefix);
+        argv[1] = NanNew<v8::String>((const char*)prefix);
     } else {
-        argv[1] = v8::Null();
+        argv[1] = NanNew(NanNull());
     }
 
     if (uri) {
-        argv[2] = v8::String::New((const char*)uri);
+        argv[2] = NanNew<v8::String>((const char*)uri);
     } else {
-        argv[2] = v8::Null();
+        argv[2] = NanNew(NanNull());
     }
 
     parser->Callback("endElementNS", 3, argv);
@@ -344,7 +331,7 @@ XmlSaxParser::characters(void* context,
     NanScope();
     libxmljs::XmlSaxParser* parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
 
-    v8::Handle<v8::Value> argv[1] = { v8::String::New((const char*)ch, len) };
+    v8::Local<v8::Value> argv[1] = { NanNew<v8::String>((const char*)ch, len) };
     parser->Callback("characters", 1, argv);
 }
 
@@ -353,7 +340,7 @@ XmlSaxParser::comment(void* context, const xmlChar* value)
 {
     NanScope();
     libxmljs::XmlSaxParser* parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
-    v8::Handle<v8::Value> argv[1] = { v8::String::New((const char*)value) };
+    v8::Local<v8::Value> argv[1] = { NanNew<v8::String>((const char*)value) };
     parser->Callback("comment", 1, argv);
 }
 
@@ -363,7 +350,7 @@ XmlSaxParser::cdata_block(void* context, const xmlChar* value,
 {
     NanScope();
     libxmljs::XmlSaxParser* parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
-    v8::Handle<v8::Value> argv[1] = { v8::String::New((const char*)value, len) };
+    v8::Local<v8::Value> argv[1] = { NanNew<v8::String>((const char*)value, len) };
     parser->Callback("cdata", 1, argv);
 }
 
@@ -409,7 +396,7 @@ XmlSaxParser::warning(void* context, const char* msg, ...)
     va_start(args, msg);
     if (vasprintf(&message, msg, args) >= 0)
     {
-        v8::Handle<v8::Value> argv[1] = { v8::String::New((const char*)message) };
+        v8::Local<v8::Value> argv[1] = { NanNew<v8::String>((const char*)message) };
         parser->Callback("warning", 1, argv);
     }
 
@@ -429,7 +416,7 @@ XmlSaxParser::error(void* context, const char* msg, ...)
     va_start(args, msg);
     if (vasprintf(&message, msg, args) >= 0)
     {
-        v8::Handle<v8::Value> argv[1] = { v8::String::New((const char*)message) };
+        v8::Local<v8::Value> argv[1] = { NanNew<v8::String>((const char*)message) };
         parser->Callback("error", 1, argv);
     }
 
@@ -441,11 +428,15 @@ void
 XmlSaxParser::Initialize(v8::Handle<v8::Object> target) {
   NanScope();
 
+  NanAssignPersistent(emit_symbol, NanSymbol(EMIT_SYMBOL_STRING));
+
+
   // SAX Parser
   v8::Local<v8::FunctionTemplate> parser_t =
-    v8::FunctionTemplate::New(NewParser);
+    NanNew<v8::FunctionTemplate>(NewParser);
 
-  NanInitPersistent(v8::FunctionTemplate, sax_parser_template, parser_t);
+  v8::Persistent<v8::FunctionTemplate> sax_parser_template;
+  NanAssignPersistent(sax_parser_template, parser_t);
 
   parser_t->InstanceTemplate()->SetInternalFieldCount(1);
 
@@ -453,14 +444,15 @@ XmlSaxParser::Initialize(v8::Handle<v8::Object> target) {
                         "parseString",
                         XmlSaxParser::ParseString);
 
-  target->Set(v8::String::NewSymbol("SaxParser"),
+  target->Set(NanSymbol("SaxParser"),
               parser_t->GetFunction());
 
   v8::Local<v8::FunctionTemplate> push_parser_t =
-    v8::FunctionTemplate::New(NewPushParser);
+    NanNew<v8::FunctionTemplate>(NewPushParser);
 
   // Push Parser
-  NanInitPersistent(v8::FunctionTemplate, sax_push_parser_template, push_parser_t);
+  v8::Persistent<v8::FunctionTemplate> sax_push_parser_template;
+  NanAssignPersistent(sax_push_parser_template, push_parser_t);
 
   push_parser_t->InstanceTemplate()->SetInternalFieldCount(1);
 
@@ -468,7 +460,7 @@ XmlSaxParser::Initialize(v8::Handle<v8::Object> target) {
                         "push",
                         XmlSaxParser::Push);
 
-  target->Set(v8::String::NewSymbol("SaxPushParser"),
+  target->Set(NanSymbol("SaxPushParser"),
               push_parser_t->GetFunction());
 }
 }  // namespace libxmljs

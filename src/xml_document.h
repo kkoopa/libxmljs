@@ -24,7 +24,7 @@ public:
 
     // create a new document handle initalized with the
     // given xmlDoc object, intended for use in c++ space
-    static v8::Handle<v8::Object> New(xmlDoc* doc);
+    static v8::Local<v8::Object> New(xmlDoc* doc);
 
     void ref() {
         Ref();

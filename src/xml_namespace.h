@@ -21,7 +21,7 @@ public:
     XmlNamespace(xmlNs* node, const char* prefix, const char* href);
     ~XmlNamespace();
 
-    static v8::Handle<v8::Object> New(xmlNs* ns);
+    static v8::Local<v8::Object> New(xmlNs* ns);
 
 protected:
 
@@ -29,8 +29,8 @@ protected:
     static NAN_METHOD(Href);
     static NAN_METHOD(Prefix);
 
-    v8::Handle<v8::Value> get_href();
-    v8::Handle<v8::Value> get_prefix();
+    v8::Local<v8::Value> get_href();
+    v8::Local<v8::Value> get_prefix();
 
     friend class Node;
 };

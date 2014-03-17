@@ -17,7 +17,7 @@ public:
     static v8::Persistent<v8::FunctionTemplate> constructor_template;
 
     // create new xml element to wrap the node
-    static v8::Handle<v8::Object> New(xmlNode* node);
+    static v8::Local<v8::Object> New(xmlNode* node);
 
 protected:
 
@@ -39,19 +39,19 @@ protected:
 
     void set_name(const char* name);
 
-    v8::Handle<v8::Value> get_name();
-    v8::Handle<v8::Value> get_child(int32_t idx);
-    v8::Handle<v8::Value> get_child_nodes();
-    v8::Handle<v8::Value> get_path();
-    v8::Handle<v8::Value> get_attr(const char* name);
-    v8::Handle<v8::Value> get_attrs();
+    v8::Local<v8::Value> get_name();
+    v8::Local<v8::Value> get_child(int32_t idx);
+    v8::Local<v8::Value> get_child_nodes();
+    v8::Local<v8::Value> get_path();
+    v8::Local<v8::Value> get_attr(const char* name);
+    v8::Local<v8::Value> get_attrs();
     void set_attr(const char* name, const char* value);
     void add_child(XmlElement* child);
     void add_cdata(xmlNode* cdata);
     void set_content(const char* content);
-    v8::Handle<v8::Value> get_content();
-    v8::Handle<v8::Value> get_next_element();
-    v8::Handle<v8::Value> get_prev_element();
+    v8::Local<v8::Value> get_content();
+    v8::Local<v8::Value> get_next_element();
+    v8::Local<v8::Value> get_prev_element();
     void add_prev_sibling(XmlElement* element);
     void add_next_sibling(XmlElement* element);
     XmlElement *import_element(XmlElement* element);

@@ -26,7 +26,7 @@ NAN_METHOD(XmlDocument::Encoding)
     // if no args, get the encoding
     if (args.Length() == 0 || args[0]->IsUndefined()) {
         if (document->xml_obj->encoding)
-            NanReturnValue(v8::String::New(
+            NanReturnValue(NanNew<v8::String>(
                         (const char *)document->xml_obj->encoding,
                         xmlStrlen((const xmlChar*)document->xml_obj->encoding)));
 
@@ -50,7 +50,7 @@ NAN_METHOD(XmlDocument::Version)
     assert(document);
 
     if (document->xml_obj->version)
-        NanReturnValue(v8::String::New((const char *)document->xml_obj->version,
+        NanReturnValue(NanNew<v8::String>((const char *)document->xml_obj->version,
                     xmlStrlen((const xmlChar*)document->xml_obj->version)));
 
     NanReturnNull();
@@ -93,8 +93,8 @@ NAN_METHOD(XmlDocument::SetDtd)
 
     v8::String::Utf8Value name(args[0]);
 
-    v8::Handle<v8::Value> extIdOpt;
-    v8::Handle<v8::Value> sysIdOpt;
+    v8::Local<v8::Value> extIdOpt;
+    v8::Local<v8::Value> sysIdOpt;
     if (args.Length() > 1 && args[1]->IsString()) {
       extIdOpt = args[1];
     }
@@ -130,7 +130,7 @@ NAN_METHOD(XmlDocument::ToString)
     xmlChar* buffer = NULL;
     int len = 0;
     xmlDocDumpFormatMemoryEnc(document->xml_obj, &buffer, &len, "UTF-8", args[0]->BooleanValue() ? 1 : 0);
-    v8::Local<v8::String> str = v8::String::New((const char*)buffer, len);
+    v8::Local<v8::String> str = NanNew<v8::String>((const char*)buffer, len);
     xmlFree(buffer);
 
     NanReturnValue(str);
@@ -138,13 +138,13 @@ NAN_METHOD(XmlDocument::ToString)
 
 // not called from node
 // private api
-v8::Handle<v8::Object>
+v8::Local<v8::Object>
 XmlDocument::New(xmlDoc* doc)
 {
-    NanScope();
+    NanEscapableScope();
 
     if (doc->_private) {
-        return scope.Close(NanObjectWrapHandle(static_cast<XmlDocument*>(doc->_private)));
+        return NanEscapeScope(NanObjectWrapHandle(static_cast<XmlDocument*>(doc->_private)));
     }
 
     v8::Local<v8::Object> obj = NanPersistentToLocal(constructor_template)->GetFunction()->NewInstance();
@@ -160,7 +160,7 @@ XmlDocument::New(xmlDoc* doc)
     // this is how we can get instances or already existing v8 objects
     doc->_private = document;
 
-    return scope.Close(obj);
+    return NanEscapeScope(obj);
 }
 
 NAN_METHOD(XmlDocument::FromHtml)
@@ -169,9 +169,9 @@ NAN_METHOD(XmlDocument::FromHtml)
 
     v8::Local<v8::Object> options = args[1]->ToObject();
     v8::Local<v8::Value>  baseUrlOpt  = options->Get(
-        v8::String::NewSymbol("baseUrl"));
+        NanSymbol("baseUrl"));
     v8::Local<v8::Value>  encodingOpt = options->Get(
-        v8::String::NewSymbol("encoding"));
+        NanSymbol("encoding"));
 
     // the base URL that will be used for this HTML parsed document
     v8::String::Utf8Value baseUrl_(baseUrlOpt->ToString());
@@ -189,7 +189,7 @@ NAN_METHOD(XmlDocument::FromHtml)
         encoding = NULL;
     }
 
-    v8::Local<v8::Array> errors = v8::Array::New();
+    v8::Local<v8::Array> errors = NanNew<v8::Array>();
     xmlResetLastError();
     xmlSetStructuredErrorFunc(reinterpret_cast<void*>(&errors), XmlSyntaxError::PushToArray);
 
@@ -216,8 +216,8 @@ NAN_METHOD(XmlDocument::FromHtml)
         return NanThrowError("Could not parse XML string");
     }
 
-    v8::Handle<v8::Object> doc_handle = XmlDocument::New(doc);
-    doc_handle->Set(v8::String::New("errors"), errors);
+    v8::Local<v8::Object> doc_handle = XmlDocument::New(doc);
+    doc_handle->Set(NanNew<v8::String>("errors"), errors);
 
     // create the xml document handle to return
     NanReturnValue(doc_handle);
@@ -227,7 +227,7 @@ NAN_METHOD(XmlDocument::FromXml)
 {
     NanScope();
 
-    v8::Local<v8::Array> errors = v8::Array::New();
+    v8::Local<v8::Array> errors = NanNew<v8::Array>();
     xmlResetLastError();
     xmlSetStructuredErrorFunc(reinterpret_cast<void *>(&errors),
             XmlSyntaxError::PushToArray);
@@ -255,8 +255,8 @@ NAN_METHOD(XmlDocument::FromXml)
         return NanThrowError("Could not parse XML string");
     }
 
-    v8::Handle<v8::Object> doc_handle = XmlDocument::New(doc);
-    doc_handle->Set(v8::String::New("errors"), errors);
+    v8::Local<v8::Object> doc_handle = XmlDocument::New(doc);
+    doc_handle->Set(NanNew<v8::String>("errors"), errors);
 
     xmlNode* root_node = xmlDocGetRootElement(doc);
     if (root_node == NULL) {
@@ -271,7 +271,7 @@ NAN_METHOD(XmlDocument::Validate)
 {
     NanScope();
 
-    v8::Local<v8::Array> errors = v8::Array::New();
+    v8::Local<v8::Array> errors = NanNew<v8::Array>();
     xmlResetLastError();
     xmlSetStructuredErrorFunc(reinterpret_cast<void *>(&errors),
             XmlSyntaxError::PushToArray);
@@ -293,7 +293,7 @@ NAN_METHOD(XmlDocument::Validate)
     }
     bool valid = xmlSchemaValidateDoc(valid_ctxt, document->xml_obj) == 0;
 
-    NanReturnValue(v8::Boolean::New(valid));
+    NanReturnValue(NanNew<v8::Boolean>(valid));
 }
 
 /// this is a blank object with prototype methods
@@ -328,10 +328,11 @@ XmlDocument::Initialize(v8::Handle<v8::Object> target)
 {
     NanScope();
 
-    v8::Local<v8::FunctionTemplate> tmpl = v8::FunctionTemplate::New(New);
-    tmpl->SetClassName(v8::String::NewSymbol("Document"));
+    v8::Local<v8::FunctionTemplate> tmpl =
+      NanNew<v8::FunctionTemplate, NanFunctionCallback>(New);
+    tmpl->SetClassName(NanSymbol("Document"));
 
-    NanAssignPersistent(v8::FunctionTemplate, constructor_template, tmpl);
+    NanAssignPersistent(constructor_template, tmpl);
     tmpl->InstanceTemplate()->SetInternalFieldCount(1);
 
     /// setup internal methods for bindings
@@ -363,7 +364,7 @@ XmlDocument::Initialize(v8::Handle<v8::Object> target)
     NODE_SET_METHOD(target, "fromHtml", XmlDocument::FromHtml);
 
     // used to create new document handles
-    target->Set(v8::String::NewSymbol("Document"), tmpl->GetFunction());
+    target->Set(NanSymbol("Document"), tmpl->GetFunction());
 
     XmlNode::Initialize(target);
     XmlNamespace::Initialize(target);

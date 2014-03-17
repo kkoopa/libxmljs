@@ -31,7 +31,7 @@ NAN_METHOD(XmlElement::New) {
 
   v8::String::Utf8Value name(args[1]);
 
-  v8::Handle<v8::Value> contentOpt;
+  v8::Local<v8::Value> contentOpt;
   if(args[2]->IsString()) {
       contentOpt = args[2];
   }
@@ -51,7 +51,7 @@ NAN_METHOD(XmlElement::New) {
   element->Wrap(args.Holder());
 
   // this prevents the document from going away
-  args.Holder()->Set(v8::String::NewSymbol("document"), args[0]);
+  args.Holder()->Set(NanSymbol("document"), args[0]);
 
   NanReturnValue(args.Holder());
 }
@@ -120,7 +120,7 @@ NAN_METHOD(XmlElement::AddCData) {
   XmlElement* element = ObjectWrap::Unwrap<XmlElement>(args.Holder());
   assert(element);
 
-  v8::Handle<v8::Value> contentOpt;
+  v8::Local<v8::Value> contentOpt;
   if(args[0]->IsString()) {
       contentOpt = args[0];
   }
@@ -150,11 +150,11 @@ NAN_METHOD(XmlElement::Find) {
       ctxt.register_ns((const xmlChar*)"xmlns", (const xmlChar*)*uri);
 
     } else if (args[1]->IsObject()) {
-      v8::Handle<v8::Object> namespaces = args[1]->ToObject();
-      v8::Handle<v8::Array> properties = namespaces->GetPropertyNames();
+      v8::Local<v8::Object> namespaces = args[1]->ToObject();
+      v8::Local<v8::Array> properties = namespaces->GetPropertyNames();
       for (unsigned int i = 0; i < properties->Length(); i++) {
         v8::Local<v8::String> prop_name = properties->Get(
-          v8::Number::New(i))->ToString();
+          NanNew<v8::Number>(i))->ToString();
         v8::String::Utf8Value prefix(prop_name);
         v8::String::Utf8Value uri(namespaces->Get(prop_name));
         ctxt.register_ns((const xmlChar*)*prefix, (const xmlChar*)*uri);
@@ -202,7 +202,7 @@ NAN_METHOD(XmlElement::Child) {
 
   if (args.Length() != 1 || !args[0]->IsInt32())
   {
-      ThrowError("Bad argument: must provide #child() with a number");
+      return NanThrowError("Bad argument: must provide #child() with a number");
   }
 
   const int32_t idx = args[0]->Int32Value();
@@ -263,24 +263,24 @@ XmlElement::set_name(const char* name) {
   xmlNodeSetName(xml_obj, (const xmlChar*)name);
 }
 
-v8::Handle<v8::Value>
+v8::Local<v8::Value>
 XmlElement::get_name() {
-    if(xml_obj->name) return v8::String::New((const char*)xml_obj->name);
-    else return v8::Undefined();
+    if(xml_obj->name) return NanNew<v8::String>((const char*)xml_obj->name);
+    else return NanNew(NanUndefined());
 }
 
 // TODO(sprsquish) make these work with namespaces
-v8::Handle<v8::Value>
+v8::Local<v8::Value>
 XmlElement::get_attr(const char* name) {
-  NanScope();
+  NanEscapableScope();
   xmlAttr* attr = xmlHasProp(xml_obj, (const xmlChar*)name);
 
   // why do we need a reference to the element here?
   if (attr) {
-      return scope.Close(XmlAttribute::New(attr));
+      return NanEscapeScope(XmlAttribute::New(attr));
   }
 
-  return v8::Null();
+  return NanEscapeScope(NanNew(NanNull()));
 }
 
 // TODO(sprsquish) make these work with namespaces
@@ -291,24 +291,24 @@ XmlElement::set_attr(const char* name,
     XmlAttribute::New(xml_obj, (const xmlChar*)name, (const xmlChar*)value);
 }
 
-v8::Handle<v8::Value>
+v8::Local<v8::Value>
 XmlElement::get_attrs() {
-  NanScope();
+  NanEscapableScope();
   xmlAttr* attr = xml_obj->properties;
 
   if (!attr)
-      return scope.Close(v8::Array::New(0));
+      return NanEscapeScope(NanNew<v8::Array>(0));
 
-  v8::Handle<v8::Array> attributes = v8::Array::New();
-  v8::Handle<v8::Function> push = v8::Handle<v8::Function>::Cast(
-    attributes->Get(v8::String::NewSymbol("push")));
-  v8::Handle<v8::Value> argv[1];
+  v8::Local<v8::Array> attributes = NanNew<v8::Array>();
+  v8::Local<v8::Function> push = v8::Local<v8::Function>::Cast(
+    attributes->Get(NanSymbol("push")));
+  v8::Local<v8::Value> argv[1];
   do {
       argv[0] = XmlAttribute::New(attr);
       push->Call(attributes, 1, argv);
   } while ((attr = attr->next));
 
-  return scope.Close(attributes);
+  return NanEscapeScope(attributes);
 }
 
 void
@@ -328,9 +328,9 @@ XmlElement::add_cdata(xmlNode* cdata) {
 }
 
 
-v8::Handle<v8::Value>
+v8::Local<v8::Value>
 XmlElement::get_child(int32_t idx) {
-  NanScope();
+  NanEscapableScope();
   xmlNode* child = xml_obj->children;
 
   int32_t i = 0;
@@ -340,25 +340,25 @@ XmlElement::get_child(int32_t idx) {
   }
 
   if (!child)
-    return v8::Null();
+    return NanEscapeScope(NanNew(NanNull()));
 
-  return scope.Close(XmlElement::New(child));
+  return NanEscapeScope(XmlElement::New(child));
 }
 
-v8::Handle<v8::Value>
+v8::Local<v8::Value>
 XmlElement::get_child_nodes() {
-    NanScope();
+    NanEscapableScope();
 
     xmlNode* child = xml_obj->children;
     if (!child)
-        return scope.Close(v8::Array::New(0));
+        return NanEscapeScope(NanNew<v8::Array>(0));
 
     uint32_t len = 0;
     do {
         ++len;
     } while ((child = child->next));
 
-    v8::Handle<v8::Array> children = v8::Array::New(len);
+    v8::Local<v8::Array> children = NanNew<v8::Array>(len);
     child = xml_obj->children;
 
     uint32_t i = 0;
@@ -366,15 +366,15 @@ XmlElement::get_child_nodes() {
         children->Set(i, XmlNode::New(child));
     } while ((child = child->next) && ++i < len);
 
-    return scope.Close(children);
+    return NanEscapeScope(children);
 }
 
-v8::Handle<v8::Value>
+v8::Local<v8::Value>
 XmlElement::get_path() {
   xmlChar* path = xmlGetNodePath(xml_obj);
   const char* return_path = path ? reinterpret_cast<char*>(path) : "";
   int str_len = xmlStrlen((const xmlChar*)return_path);
-  v8::Handle<v8::String> js_obj = v8::String::New(return_path, str_len);
+  v8::Local<v8::String> js_obj = NanNew<v8::String>(return_path, str_len);
   xmlFree(path);
   return js_obj;
 }
@@ -386,57 +386,57 @@ XmlElement::set_content(const char* content) {
   xmlFree(encoded);
 }
 
-v8::Handle<v8::Value>
+v8::Local<v8::Value>
 XmlElement::get_content() {
   xmlChar* content = xmlNodeGetContent(xml_obj);
   if (content) {
-    v8::Handle<v8::String> ret_content =
-      v8::String::New((const char *)content);
+    v8::Local<v8::String> ret_content =
+      NanNew<v8::String>((const char *)content);
     xmlFree(content);
     return ret_content;
   }
 
-  return v8::String::Empty();
+  return NanNew<v8::String>();
 }
 
-v8::Handle<v8::Value>
+v8::Local<v8::Value>
 XmlElement::get_next_element() {
-  NanScope();
+  NanEscapableScope();
 
   xmlNode* sibling = xml_obj->next;
   if (!sibling)
-    return v8::Null();
+    return NanEscapeScope(NanNew(NanNull()));
 
   while (sibling && sibling->type != XML_ELEMENT_NODE)
     sibling = sibling->next;
 
   if (sibling) {
-      return scope.Close(XmlElement::New(sibling));
+      return NanEscapeScope(XmlElement::New(sibling));
   }
 
-  return v8::Null();
+  return NanEscapeScope(NanNew(NanNull()));
 }
 
-v8::Handle<v8::Value>
+v8::Local<v8::Value>
 XmlElement::get_prev_element() {
-  NanScope();
+  NanEscapableScope();
 
   xmlNode* sibling = xml_obj->prev;
   if (!sibling)
-    return v8::Null();
+    return NanEscapeScope(NanNew(NanNull()));
 
   while (sibling && sibling->type != XML_ELEMENT_NODE) {
     sibling = sibling->prev;
   }
 
   if (sibling) {
-      return scope.Close(XmlElement::New(sibling));
+      return NanEscapeScope(XmlElement::New(sibling));
   }
 
-  return v8::Null();
+  return NanEscapeScope(NanNew(NanNull()));
 }
 
-v8::Handle<v8::Object>
+v8::Local<v8::Object>
 XmlElement::New(xmlNode* node)
 {
     if (node->_private) {
@@ -481,7 +481,7 @@ XmlElement::import_element(XmlElement *element) {
         // we have to have handles to attach them to
         // the problem with this approach tho is that the object could be reclaimed
         // what prevents v8 from garbage collecting it?
-        v8::Handle<v8::Object> new_elem = XmlElement::New(new_child);
+        v8::Local<v8::Object> new_elem = XmlElement::New(new_child);
         return ObjectWrap::Unwrap<XmlElement>(new_elem);
     }
 }
@@ -490,8 +490,9 @@ void
 XmlElement::Initialize(v8::Handle<v8::Object> target)
 {
     NanScope();
-    v8::Local<v8::FunctionTemplate> tmpl = v8::FunctionTemplate::New(New);
-    NanAssignPersistent(v8::FunctionTemplate, constructor_template, tmpl);
+    v8::Local<v8::FunctionTemplate> tmpl =
+      NanNew<v8::FunctionTemplate, NanFunctionCallback>(New);
+    NanAssignPersistent(constructor_template, tmpl);
     tmpl->Inherit(NanPersistentToLocal(XmlNode::constructor_template));
     tmpl->InstanceTemplate()->SetInternalFieldCount(1);
 
@@ -551,7 +552,7 @@ XmlElement::Initialize(v8::Handle<v8::Object> target)
             "addNextSibling",
             XmlElement::AddNextSibling);
 
-    target->Set(v8::String::NewSymbol("Element"),
+    target->Set(NanSymbol("Element"),
             tmpl->GetFunction());
 }
 

@@ -13,9 +13,6 @@
 
 namespace libxmljs {
 
-// convenience function to create a v8 error wrapped by ThrowException
-v8::Handle<v8::Value> ThrowError(const char* msg);
-
 #ifdef LIBXML_DEBUG_ENABLED
 static const bool debugging = true;
 #else

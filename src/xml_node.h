@@ -19,7 +19,7 @@ public:
     static v8::Persistent<v8::FunctionTemplate> constructor_template;
 
     // create new XmlElement, XmlAttribute, etc. to wrap a libxml xmlNode
-    static v8::Handle<v8::Value> New(xmlNode* node);
+    static v8::Local<v8::Value> New(xmlNode* node);
 
 protected:
 
@@ -35,19 +35,19 @@ protected:
     static NAN_METHOD(Remove);
     static NAN_METHOD(Clone);
 
-    v8::Handle<v8::Value> get_doc();
-    v8::Handle<v8::Value> remove_namespace();
-    v8::Handle<v8::Value> get_namespace();
+    v8::Local<v8::Value> get_doc();
+    v8::Local<v8::Value> remove_namespace();
+    v8::Local<v8::Value> get_namespace();
     void set_namespace(xmlNs* ns);
     xmlNs * find_namespace(const char * search_str);
-    v8::Handle<v8::Value> get_all_namespaces();
-    v8::Handle<v8::Value> get_parent();
-    v8::Handle<v8::Value> get_prev_sibling();
-    v8::Handle<v8::Value> get_next_sibling();
-    v8::Handle<v8::Value> get_line_number();
-    v8::Handle<v8::Value> clone(bool recurse);
-    v8::Handle<v8::Value> get_type();
-    v8::Handle<v8::Value> to_string();
+    v8::Local<v8::Value> get_all_namespaces();
+    v8::Local<v8::Value> get_parent();
+    v8::Local<v8::Value> get_prev_sibling();
+    v8::Local<v8::Value> get_next_sibling();
+    v8::Local<v8::Value> get_line_number();
+    v8::Local<v8::Value> clone(bool recurse);
+    v8::Local<v8::Value> get_type();
+    v8::Local<v8::Value> to_string();
     void remove();
 };
 

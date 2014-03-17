@@ -11,7 +11,7 @@ NAN_METHOD(XmlAttribute::New) {
   NanReturnValue(args.Holder());
 }
 
-v8::Handle<v8::Object>
+v8::Local<v8::Object>
 XmlAttribute::New(xmlNode* xml_obj, const xmlChar* name, const xmlChar* value)
 {
     xmlAttr* attr = xmlSetProp(xml_obj, name, value);
@@ -26,7 +26,7 @@ XmlAttribute::New(xmlNode* xml_obj, const xmlChar* name, const xmlChar* value)
     return obj;
 }
 
-v8::Handle<v8::Object>
+v8::Local<v8::Object>
 XmlAttribute::New(xmlAttr* attr)
 {
     assert(attr->type == XML_ATTRIBUTE_NODE);
@@ -72,27 +72,27 @@ NAN_METHOD(XmlAttribute::Node) {
   NanReturnValue(attr->get_element());
 }
 
-v8::Handle<v8::Value>
+v8::Local<v8::Value>
 XmlAttribute::get_name() {
   if (xml_obj->name)
-    return v8::String::New((const char*)xml_obj->name,
+    return NanNew<v8::String>((const char*)xml_obj->name,
                            xmlStrlen(xml_obj->name));
 
-  return v8::Null();
+  return NanNew(NanNull());
 }
 
-v8::Handle<v8::Value>
+v8::Local<v8::Value>
 XmlAttribute::get_value() {
-  NanScope();
+  NanEscapableScope();
   xmlChar* value = xmlNodeGetContent(xml_obj);
   if (value != NULL) {
-    v8::Handle<v8::String> ret_value = v8::String::New((const char*)value,
+    v8::Local<v8::String> ret_value = NanNew<v8::String>((const char*)value,
                                                        xmlStrlen(value));
     xmlFree(value);
-    return scope.Close(ret_value);
+    return NanEscapeScope(ret_value);
   }
 
-  return v8::Null();
+  return NanNew(NanNull());
 }
 
 void
@@ -125,7 +125,7 @@ XmlAttribute::set_value(const char* value) {
   }
 }
 
-v8::Handle<v8::Value>
+v8::Local<v8::Value>
 XmlAttribute::get_element() {
     return XmlElement::New(xml_obj->parent);
 }
@@ -134,8 +134,8 @@ void
 XmlAttribute::Initialize(v8::Handle<v8::Object> target) {
   NanScope();
   v8::Local<v8::FunctionTemplate> tmpl =
-    v8::FunctionTemplate::New(XmlAttribute::New);
-  NanAssignPersistent(v8::FunctionTemplate, constructor_template, tmpl);
+   NanNew<v8::FunctionTemplate, NanFunctionCallback>(XmlAttribute::New);
+  NanAssignPersistent(constructor_template, tmpl);
   tmpl->Inherit(NanPersistentToLocal(XmlNode::constructor_template));
   tmpl->InstanceTemplate()->SetInternalFieldCount(1);
 
@@ -143,7 +143,7 @@ XmlAttribute::Initialize(v8::Handle<v8::Object> target) {
   NODE_SET_PROTOTYPE_METHOD(tmpl, "value", XmlAttribute::Value);
   NODE_SET_PROTOTYPE_METHOD(tmpl, "node", XmlAttribute::Node);
 
-  target->Set(v8::String::NewSymbol("Attribute"),
+  target->Set(NanSymbol("Attribute"),
               tmpl->GetFunction());
 }
 

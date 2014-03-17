@@ -48,7 +48,7 @@ NAN_METHOD(XmlNamespace::New) {
   NanReturnValue(args.Holder());
 }
 
-v8::Handle<v8::Object>
+v8::Local<v8::Object>
 XmlNamespace::New(xmlNs* node)
 {
     if (node->_private) {
@@ -103,30 +103,30 @@ NAN_METHOD(XmlNamespace::Prefix) {
   NanReturnValue(ns->get_prefix());
 }
 
-v8::Handle<v8::Value>
+v8::Local<v8::Value>
 XmlNamespace::get_href() {
   if (xml_obj->href)
-    return v8::String::New((const char*)xml_obj->href,
+    return NanNew<v8::String>((const char*)xml_obj->href,
                            xmlStrlen(xml_obj->href));
 
-  return v8::Null();
+  return NanNew(NanNull());
 }
 
-v8::Handle<v8::Value>
+v8::Local<v8::Value>
 XmlNamespace::get_prefix() {
   if (xml_obj->prefix)
-    return v8::String::New((const char*)xml_obj->prefix,
+    return NanNew<v8::String>((const char*)xml_obj->prefix,
                            xmlStrlen(xml_obj->prefix));
 
-  return v8::Null();
+  return NanNew(NanNull());
 }
 
 void
 XmlNamespace::Initialize(v8::Handle<v8::Object> target) {
   NanScope();
   v8::Local<v8::FunctionTemplate> tmpl =
-    v8::FunctionTemplate::New(XmlNamespace::New);
-  NanAssignPersistent(v8::FunctionTemplate, constructor_template, tmpl);
+    NanNew<v8::FunctionTemplate, NanFunctionCallback>(New);
+  NanAssignPersistent(constructor_template, tmpl);
   tmpl->InstanceTemplate()->SetInternalFieldCount(1);
 
   NODE_SET_PROTOTYPE_METHOD(tmpl,
@@ -137,7 +137,7 @@ XmlNamespace::Initialize(v8::Handle<v8::Object> target) {
                         "prefix",
                         XmlNamespace::Prefix);
 
-  target->Set(v8::String::NewSymbol("Namespace"),
+  target->Set(NanSymbol("Namespace"),
               tmpl->GetFunction());
 }
 }  // namespace libxmljs

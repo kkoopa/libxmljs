@@ -17,10 +17,10 @@ public:
     static void Initialize(v8::Handle<v8::Object> target);
     static v8::Persistent<v8::FunctionTemplate> constructor_template;
 
-    static v8::Handle<v8::Object> New(xmlNode* xml_obj,
+    static v8::Local<v8::Object> New(xmlNode* xml_obj,
             const xmlChar* name, const xmlChar* value);
 
-    static v8::Handle<v8::Object> New(xmlAttr* attr);
+    static v8::Local<v8::Object> New(xmlAttr* attr);
 
 protected:
 
@@ -29,10 +29,10 @@ protected:
     static NAN_METHOD(Value);
     static NAN_METHOD(Node);
 
-    v8::Handle<v8::Value> get_name();
-    v8::Handle<v8::Value> get_value();
+    v8::Local<v8::Value> get_name();
+    v8::Local<v8::Value> get_value();
     void set_value(const char* value);
-    v8::Handle<v8::Value> get_element();
+    v8::Local<v8::Value> get_element();
 };
 
 }  // namespace libxmljs

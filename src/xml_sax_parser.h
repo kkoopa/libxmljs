@@ -25,7 +25,7 @@ class XmlSaxParser : public node::ObjectWrap {
   void
   Callback(const char* what,
            int argc = 0,
-           v8::Handle<v8::Value> argv[] = NULL);
+           v8::Local<v8::Value> argv[] = NULL);
 
   void
   parse_string(const char* str,
