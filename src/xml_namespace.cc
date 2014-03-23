@@ -56,7 +56,7 @@ XmlNamespace::New(xmlNs* node)
     }
 
     XmlNamespace* ns = new XmlNamespace(node);
-    v8::Local<v8::Object> obj = NanPersistentToLocal(constructor_template)->GetFunction()->NewInstance();
+    v8::Local<v8::Object> obj = NanNew(constructor_template)->GetFunction()->NewInstance();
     ns->Wrap(obj);
     return obj;
 }

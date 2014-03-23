@@ -147,7 +147,7 @@ XmlDocument::New(xmlDoc* doc)
         return NanEscapeScope(NanObjectWrapHandle(static_cast<XmlDocument*>(doc->_private)));
     }
 
-    v8::Local<v8::Object> obj = NanPersistentToLocal(constructor_template)->GetFunction()->NewInstance();
+    v8::Local<v8::Object> obj = NanNew(constructor_template)->GetFunction()->NewInstance();
 
     XmlDocument* document = ObjectWrap::Unwrap<XmlDocument>(obj);
 

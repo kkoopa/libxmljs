@@ -123,7 +123,7 @@ XmlSaxParser::Callback(const char* what,
     }
 
     // get the 'emit' function from ourselves
-    v8::Local<v8::Value> emit_v = NanObjectWrapHandle(this)->Get(NanPersistentToLocal(emit_symbol));
+    v8::Local<v8::Value> emit_v = NanObjectWrapHandle(this)->Get(NanNew(emit_symbol));
     assert(emit_v->IsFunction());
 
     // trigger the event

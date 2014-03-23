@@ -444,7 +444,7 @@ XmlElement::New(xmlNode* node)
     }
 
     XmlElement* element = new XmlElement(node);
-    v8::Local<v8::Object> obj = NanPersistentToLocal(constructor_template)->GetFunction()->NewInstance();
+    v8::Local<v8::Object> obj = NanNew(constructor_template)->GetFunction()->NewInstance();
     element->Wrap(obj);
     return obj;
 }
@@ -493,7 +493,7 @@ XmlElement::Initialize(v8::Handle<v8::Object> target)
     v8::Local<v8::FunctionTemplate> tmpl =
       NanNew<v8::FunctionTemplate, NanFunctionCallback>(New);
     NanAssignPersistent(constructor_template, tmpl);
-    tmpl->Inherit(NanPersistentToLocal(XmlNode::constructor_template));
+    tmpl->Inherit(NanNew(XmlNode::constructor_template));
     tmpl->InstanceTemplate()->SetInternalFieldCount(1);
 
     NODE_SET_PROTOTYPE_METHOD(tmpl,

@@ -69,7 +69,7 @@ NAN_METHOD(XmlNode::Namespace) {
       }
 
       v8::Local<v8::Function> define_namespace =
-          NanPersistentToLocal(XmlNamespace::constructor_template)->GetFunction();
+          NanNew(XmlNamespace::constructor_template)->GetFunction();
 
       // will create a new namespace attached to this node
       // since we keep the document around, the namespace, like the node, won't be
